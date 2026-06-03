@@ -18,8 +18,9 @@ namespace Remotely.Server.Services;
 public interface IDataService
 {
     Task AddAlert(string deviceId, string organizationId, string alertMessage, string? details = null);
-
+    
     Task<Result<DeviceGroup>> AddDeviceGroup(string orgId, DeviceGroup deviceGroup);
+    Task<Result> RenameDeviceGroup(string orgId, string deviceGroupId, string newName);
     Task<Result> AddDeviceToGroup(string deviceId, string groupId);
     Task<Result<InviteLink>> AddInvite(string orgId, InviteViewModel invite);
 
@@ -868,6 +869,37 @@ public class DataService : IDataService
 
         await dbContext.SaveChangesAsync();
         return Result.Ok();
+    }
+
+    public async Task<Result> RenameDeviceGroup(string orgId, string deviceGroupId, string newName)
+    {
+    if (string.IsNullOrWhiteSpace(newName))
+    {
+        return Result.Fail("Name cannot be empty.");
+    }
+
+    using var dbContext = _appDbFactory.GetContext();
+
+    if (dbContext.DeviceGroups.Any(x =>
+        x.OrganizationID == orgId &&
+        x.ID != deviceGroupId &&
+        x.Name.ToLower() == newName.ToLower()))
+    {
+        return Result.Fail("A device group with that name already exists.");
+    }
+
+    var group = await dbContext.DeviceGroups.FirstOrDefaultAsync(x =>
+        x.ID == deviceGroupId &&
+        x.OrganizationID == orgId);
+
+    if (group is null)
+    {
+        return Result.Fail("Device group not found.");
+    }
+
+    group.Name = newName;
+    await dbContext.SaveChangesAsync();
+    return Result.Ok();
     }
 
     public async Task<Result> DeleteInvite(string orgId, string inviteID)
