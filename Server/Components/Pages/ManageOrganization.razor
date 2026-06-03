@@ -62,22 +62,52 @@ else if (User is not null)
                     <span class="oi oi-question-mark"></span>
                 </button>
 
-                <select class="form-control mb-1" @bind="_selectedDeviceGroupId" size="4">
-                    @foreach (var deviceGroup in _deviceGroups)
+                <ul class="list-group mb-1">
+                @foreach (var deviceGroup in _deviceGroups)
+                {
+                    <li @key="deviceGroup.ID"
+                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(deviceGroup.ID == _selectedDeviceGroupId ? "active" : "")"
+                    @onclick="() => SelectDeviceGroup(deviceGroup.ID)">
+
+                    @if (_editingGroupId == deviceGroup.ID)
                     {
-                        <option @key="deviceGroup.ID" value="@deviceGroup.ID">@deviceGroup.Name</option>
+                        <input class="form-control form-control-sm me-2"
+                           style="max-width: 300px"
+                           maxlength="200"
+                           @bind="_editingGroupName"
+                           @bind:event="oninput"
+                           @onkeydown="EvaluateRenameKeyDown"
+                           @onclick:stopPropagation="true" />
+                        <div @onclick:stopPropagation="true">
+                            <button class="btn btn-sm btn-success me-1" @onclick="CommitRename">Save</button>
+                            <button class="btn btn-sm btn-secondary" @onclick="CancelRename">Cancel</button>
+                        </div>
                     }
-                </select>
+                    else
+                    {
+                        <span>@deviceGroup.Name</span>
+                        <button class="btn btn-sm btn-outline-secondary @(deviceGroup.ID == _selectedDeviceGroupId ? "btn-outline-light" : "")"
+                            title="Rename"
+                            @onclick="() => BeginRename(deviceGroup)"
+                            @onclick:stopPropagation="true">
+                            <span class="oi oi-pencil"></span>
+                        </button>
+                    }
+                    </li>
+                }
+                </ul>
 
                 <div class="text-end mb-3">
-                    <button type="button" class="btn btn-danger" @onclick="DeleteSelectedDeviceGroup">Delete</button>
+                    <button type="button" class="btn btn-danger"
+                    disabled="@string.IsNullOrWhiteSpace(_selectedDeviceGroupId)"
+                    @onclick="DeleteSelectedDeviceGroup">Delete</button>
                 </div>
 
                 <div class="input-group">
                     <input placeholder="Add new device group" class="form-control" maxlength="200"
-                           @bind="_newDeviceGroupName"
-                           @bind:event="oninput"
-                           @onkeypress="EvaluateNewDeviceGroupKeyPress" />
+                       @bind="_newDeviceGroupName"
+                       @bind:event="oninput"
+                       @onkeypress="EvaluateNewDeviceGroupKeyPress" />
                     <button type="submit" class="btn btn-secondary" @onclick="CreateNewDeviceGroup">Add</button>
                 </div>
             </div>
