@@ -251,6 +251,7 @@ public partial class DevicesFrame : AuthComponentBase
         var device = message.Device;
 
         // Обновляем ТОЛЬКО _allDevices — источник истины
+        // _filteredDevices пересчитается через FilterAndSortDevices при следующем рендере.
         var index = _allDevices.FindIndex(x => x.ID == device.ID);
         if (index > -1)
         {
@@ -261,7 +262,7 @@ public partial class DevicesFrame : AuthComponentBase
             _allDevices.Add(device);
         }
 
-        // Инвалидируем кэш — FilterAndSortDevices пересчитает с учётом текущего фильтра
+        // Инвалидируем кэш фильтра — иначе GetDisplayedDevices вернёт старый результат
         _lastFilterState = string.Empty;
 
         Debouncer.Debounce(
