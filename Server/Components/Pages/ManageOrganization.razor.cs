@@ -23,7 +23,9 @@ public partial class ManageOrganization : AuthComponentBase
     private string _newDeviceGroupName = string.Empty;
     private Organization? _organization;
     private string _selectedDeviceGroupId = string.Empty;
-
+    private string _editingGroupId = string.Empty;
+    private string _editingGroupName = string.Empty;
+    
     [Inject]
     private IDataService DataService { get; set; } = null!;
 
@@ -151,6 +153,78 @@ public partial class ManageOrganization : AuthComponentBase
         await DataService.DeleteDeviceGroup(User.OrganizationID, _selectedDeviceGroupId);
         _deviceGroups.RemoveAll(x => x.ID == _selectedDeviceGroupId);
         _selectedDeviceGroupId = string.Empty;
+    }
+
+    private void SelectDeviceGroup(string groupId)
+    {
+        if (_editingGroupId == groupId)
+        {
+            return; // не сбрасываем выделение пока редактируем
+        }
+        _selectedDeviceGroupId = groupId;
+        CancelRename();
+    }
+
+    private void BeginRename(DeviceGroup group)
+    {
+        _selectedDeviceGroupId = group.ID;
+        _editingGroupId = group.ID;
+        _editingGroupName = group.Name;
+    }
+
+    private void CancelRename()
+    {
+        _editingGroupId = string.Empty;
+        _editingGroupName = string.Empty;
+    }
+
+    private async Task CommitRename()
+    {
+        EnsureUserSet();
+
+        if (!User.IsAdministrator)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editingGroupName))
+        {
+            ToastService.ShowToast("Name cannot be empty.", classString: "bg-warning");
+            return;
+        }
+
+        var result = await DataService.RenameDeviceGroup(
+            User.OrganizationID,
+            _editingGroupId,
+            _editingGroupName);
+
+        if (!result.IsSuccess)
+        {
+            ToastService.ShowToast(result.Reason, classString: "bg-danger");
+            return;
+        }
+
+        var group = _deviceGroups.Find(x => x.ID == _editingGroupId);
+        if (group is not null)
+        {
+            group.Name = _editingGroupName;
+            _deviceGroups.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        ToastService.ShowToast("Device group renamed.");
+        CancelRename();
+    }
+
+    private async Task EvaluateRenameKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key.Equals("Enter", StringComparison.OrdinalIgnoreCase))
+        {
+               await CommitRename();
+        }
+        else if (args.Key.Equals("Escape", StringComparison.OrdinalIgnoreCase))
+         {
+            CancelRename();
+         }
     }
 
     private async Task DeleteUser(RemotelyUser user)
