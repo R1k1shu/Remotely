@@ -243,40 +243,39 @@ public partial class DevicesFrame : AuthComponentBase
     }
 
     private async Task HandleDeviceStateChangedMessage(object subscriber, DeviceStateChangedMessage message)
+{
+    await _devicesLock.WaitAsync();
+
+    try
     {
-        await _devicesLock.WaitAsync();
+        var device = message.Device;
 
-        try
+        // Обновляем ТОЛЬКО _allDevices — источник истины
+        var index = _allDevices.FindIndex(x => x.ID == device.ID);
+        if (index > -1)
         {
-            var device = message.Device;
-
-            var collections = new[] { _allDevices, _filteredDevices };
-
-            foreach (var collection in collections)
-            {
-                var index = collection.FindIndex(x => x.ID == device.ID);
-                if (index > -1)
-                {
-                    collection[index] = device;
-                }
-                else
-                {
-                    collection.Add(device);
-                }
-            }
-
-            Debouncer.Debounce(
-                   TimeSpan.FromSeconds(2),
-                   async () =>
-                   {
-                       await InvokeAsync(StateHasChanged);
-                   });
+            _allDevices[index] = device;
         }
-        finally
+        else
         {
-            _devicesLock.Release();
+            _allDevices.Add(device);
         }
+
+        // Инвалидируем кэш — FilterAndSortDevices пересчитает с учётом текущего фильтра
+        _lastFilterState = string.Empty;
+
+        Debouncer.Debounce(
+               TimeSpan.FromSeconds(2),
+               async () =>
+               {
+                   await InvokeAsync(StateHasChanged);
+               });
     }
+    finally
+    {
+        _devicesLock.Release();
+    }
+}
 
     private async Task HandleDisplayNotificationMessage(object subscriber, DisplayNotificationMessage message)
     {
