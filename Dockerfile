@@ -12,9 +12,12 @@ RUN dotnet publish Server/Server.csproj \
     -o /app/publish \
     --no-self-contained
 
+# Проверяем что собралось
+RUN ls /app/publish/
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
 EXPOSE 5000
-ENTRYPOINT ["dotnet", "Remotely.Server.dll"]
+ENTRYPOINT ["dotnet", "Remotely_Server.dll"]
