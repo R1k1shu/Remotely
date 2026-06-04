@@ -1,10 +1,3 @@
-LocalInstall:
-
-git clone https://github.com/R1k1shu/Remotely.git
-cd Remotely
-./setup.sh
-docker compose up -d --build
-
 # Remotely
 
 A remote control and remote scripting solution, built with .NET, Blazor, and SignalR Core.
@@ -20,12 +13,21 @@ Tutorial: https://www.youtube.com/watch?v=t-TFvr7sZ6M (Thanks, @bmcgonag!)
 
 ![image](.github/media/ask-remote.png)
 
-## Quickstart
+## Clear install of this Repo
 
 ```
 mkdir -p /var/www/remotely
 wget -q https://raw.githubusercontent.com/immense/Remotely/master/docker-compose/docker-compose.yml
 docker-compose up -d
+```
+
+## Quickstart
+
+```
+git clone https://github.com/R1k1shu/Remotely.git
+cd Remotely
+./setup.sh
+docker compose up -d --build
 ```
 
 ## Important: HTTPS and Reverse Proxies
