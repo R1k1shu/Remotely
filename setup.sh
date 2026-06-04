@@ -1,11 +1,9 @@
 #!/bin/bash
-# Скачиваем Content из оригинального образа если его нет
 if [ ! -d "Server/wwwroot/Content/Win-x64" ]; then
-    echo "Downloading Content from original image..."
-    docker run --rm -d --name remotely-orig immybot/remotely:latest sleep 30
-    docker cp remotely-orig:/app/wwwroot/Content/. Server/wwwroot/Content/
-    docker stop remotely-orig
-    echo "Done."
+    echo "Content folder missing!"
+    echo "Please run build-clients.ps1 on a Windows machine first,"
+    echo "then copy the files to Server/wwwroot/Content/ and Remotely-*.zip to Server/wwwroot/Content/"
+    exit 1
 else
     echo "Content already exists, skipping."
 fi
