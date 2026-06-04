@@ -13,7 +13,7 @@ Tutorial: https://www.youtube.com/watch?v=t-TFvr7sZ6M (Thanks, @bmcgonag!)
 
 ![image](.github/media/ask-remote.png)
 
-## Clear install of this Repo
+## Quickstart
 
 ```
 mkdir -p /var/www/remotely
@@ -21,7 +21,7 @@ wget -q https://raw.githubusercontent.com/immense/Remotely/master/docker-compose
 docker-compose up -d
 ```
 
-## Quickstart
+## Clear install of this Repo
 
 ```
 git clone https://github.com/R1k1shu/Remotely.git
