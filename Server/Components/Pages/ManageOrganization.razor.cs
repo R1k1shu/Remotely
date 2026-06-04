@@ -25,6 +25,12 @@ public partial class ManageOrganization : AuthComponentBase
     private string _selectedDeviceGroupId = string.Empty;
     private string _editingGroupId = string.Empty;
     private string _editingGroupName = string.Empty;
+    private string _deviceGroupSearch = string.Empty;
+
+    private IEnumerable<DeviceGroup> FilteredDeviceGroups =>
+    string.IsNullOrWhiteSpace(_deviceGroupSearch)
+        ? _deviceGroups
+        : _deviceGroups.Where(x => x.Name.Contains(_deviceGroupSearch, StringComparison.OrdinalIgnoreCase));
     
     [Inject]
     private IDataService DataService { get; set; } = null!;
@@ -252,7 +258,7 @@ public partial class ManageOrganization : AuthComponentBase
         _orgUsers.RemoveAll(x => x.Id == user.Id);
         ToastService.ShowToast("User deleted.");
     }
-
+    
     private async Task EditDeviceGroups(RemotelyUser user)
     {
         void editDeviceGroupsModal(RenderTreeBuilder builder)
