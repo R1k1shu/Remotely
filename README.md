@@ -1,3 +1,10 @@
+LocalInstall:
+
+git clone https://github.com/R1k1shu/Remotely.git
+cd Remotely
+./setup.sh
+docker compose up -d --build
+
 # Remotely
 
 A remote control and remote scripting solution, built with .NET, Blazor, and SignalR Core.
