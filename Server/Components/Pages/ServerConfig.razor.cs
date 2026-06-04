@@ -297,34 +297,34 @@ public partial class ServerConfig : AuthComponentBase
 
     private async Task ForceUpdateAllDevices()
     {
-	EnsureUserSet();
-	if (!User.IsServerAdmin)
-	{
-         return;
-	}
+        EnsureUserSet();
+        if (!User.IsServerAdmin)
+        {
+            return;
+        }
 
-	var allConnections = ServiceSessionCache
-         .GetAllDevices()
-         .Select(x => x.ID)
-         .ToArray();
+        var onlineDeviceIds = ServiceSessionCache
+            .GetAllDevices()
+            .Select(x => x.ID)
+            .ToArray();
 
-	if (!allConnections.Any())
-	{
-         ToastService.ShowToast("No devices are online.");
-         return;
-	}
+        var confirmed = await JsInterop.Confirm(
+            $"Force update all devices? Online: {onlineDeviceIds.Length}. Offline devices will update when they come back online.");
 
-	var confirmed = await JsInterop.Confirm(
-         $"Send force update to all {allConnections.Length} online devices?");
+        if (!confirmed)
+        {
+            return;
+        }
 
-	if (!confirmed)
-	{
-         return;
-	}
+        await DataService.SetPendingUpdateForAllDevices(User.OrganizationID, true);
 
-	var connectionIds = ServiceSessionCache.GetConnectionIdsByDeviceIds(allConnections);
-	await AgentHubContext.Clients.Clients(connectionIds).ReinstallAgent();
-	ToastService.ShowToast($"Force update command sent to {allConnections.Length} devices.");
+        if (onlineDeviceIds.Any())
+        {
+            var connectionIds = ServiceSessionCache.GetConnectionIdsByDeviceIds(onlineDeviceIds);
+            await AgentHubContext.Clients.Clients(connectionIds).ReinstallAgent();
+        }
+
+        ToastService.ShowToast(
+            $"Force update sent to {onlineDeviceIds.Length} online devices. Offline devices will update on reconnect.");
     }
-
 }

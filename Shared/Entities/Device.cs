@@ -41,6 +41,7 @@ public class Device
 
     public bool Is64Bit { get; set; }
     public bool IsOnline { get; set; }
+    public bool PendingUpdate { get; set; }
 
     [Sortable]
     [Display(Name = "Last Online")]

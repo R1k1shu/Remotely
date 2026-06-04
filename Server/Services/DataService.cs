@@ -58,6 +58,8 @@ public interface IDataService
     Task<Result> DeleteApiToken(string userName, string tokenId);
 
     Task<Result> DeleteDeviceGroup(string orgId, string deviceGroupId);
+    Task SetPendingUpdateForAllDevices(string orgId, bool pending);
+    Task<bool> GetAndClearPendingUpdate(string deviceId);
 
     Task<Result> DeleteInvite(string orgId, string inviteId);
 
@@ -832,6 +834,28 @@ public class DataService : IDataService
         dbContext.ApiTokens.Remove(token);
         await dbContext.SaveChangesAsync();
         return Result.Ok();
+    }
+
+    public async Task SetPendingUpdateForAllDevices(string orgId, bool pending)
+    {
+        using var dbContext = _appDbFactory.GetContext();
+        await dbContext.Devices
+            .Where(x => x.OrganizationID == orgId)
+            .ForEachAsync(x => x.PendingUpdate = pending);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<bool> GetAndClearPendingUpdate(string deviceId)
+    {
+        using var dbContext = _appDbFactory.GetContext();
+        var device = await dbContext.Devices.FindAsync(deviceId);
+        if (device is null || !device.PendingUpdate)
+        {
+            return false;
+        }
+        device.PendingUpdate = false;
+        await dbContext.SaveChangesAsync();
+        return true;
     }
 
     public async Task<Result> DeleteDeviceGroup(string orgId, string deviceGroupID)

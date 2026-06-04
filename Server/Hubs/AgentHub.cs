@@ -199,6 +199,10 @@ public class AgentHub : Hub<IAgentHubClient>
                 await _messenger.Send(message, connection.ConnectionId);
             }
 
+            if (await _dataService.GetAndClearPendingUpdate(Device.ID))
+            {
+                await Clients.Caller.ReinstallAgent();
+            }
             return true;
         }
         catch (Exception ex)
