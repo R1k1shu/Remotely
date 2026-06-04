@@ -55,6 +55,8 @@ public partial class ServerConfig : AuthComponentBase
 
     [Inject]
     public required IUpgradeService UpgradeService { get; init; }
+    [Inject]
+    public required IJsInterop JsInterop { get; init; }
 
 
     private SettingsModel Input { get; set; } = new();
