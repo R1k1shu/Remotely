@@ -292,4 +292,37 @@ public partial class ServerConfig : AuthComponentBase
         await AgentHubContext.Clients.Clients(agentConnections).ReinstallAgent();
         ToastService.ShowToast("Update command sent.");
     }
+
+    private async Task ForceUpdateAllDevices()
+    {
+	EnsureUserSet();
+	if (!User.IsServerAdmin)
+	{
+         return;
+	}
+
+	var allConnections = ServiceSessionCache
+         .GetAllDevices()
+         .Select(x => x.ID)
+         .ToArray();
+
+	if (!allConnections.Any())
+	{
+         ToastService.ShowToast("No devices are online.");
+         return;
+	}
+
+	var confirmed = await JsInterop.Confirm(
+         $"Send force update to all {allConnections.Length} online devices?");
+
+	if (!confirmed)
+	{
+         return;
+	}
+
+	var connectionIds = ServiceSessionCache.GetConnectionIdsByDeviceIds(allConnections);
+	await AgentHubContext.Clients.Clients(connectionIds).ReinstallAgent();
+	ToastService.ShowToast($"Force update command sent to {allConnections.Length} devices.");
+    }
+
 }
