@@ -298,3 +298,4 @@ Server.Installer/Properties/launchSettings.json
 /Server/appsettings.Development.json
 /Server/AppData
 Server/wwwroot/Content/
+!Server/wwwroot/Content/Install-Remotely.ps1

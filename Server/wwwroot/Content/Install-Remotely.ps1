@@ -123,7 +123,7 @@ function Uninstall-Remotely {
 }
 
 function Install-Remotely {
-	$HeadResponse = Invoke-WebRequest -Uri "$HostName/Content/Remotely-Win-$Platform.zip" -Method Head -UseBasicParsing
+	$HeadResponse = Invoke-WebRequest -Uri "$HostName/Content/Remotely-Win-$Platform.zip" -Method Head -UseBasicParsing -MaximumRedirection 5
 	$ETag = $HeadResponse.Headers["ETag"]
 	if (!$Etag) {
 		Write-Log "Failed to get ETag from server.  Aborting install."
@@ -163,7 +163,7 @@ function Install-Remotely {
 	else {
 		$ProgressPreference = 'SilentlyContinue'
 		Write-Log "Downloading client..."
-		Invoke-WebRequest -Uri "$HostName/Content/Remotely-Win-$Platform.zip" -OutFile "$env:TEMP\Remotely-Win-$Platform.zip" -UseBasicParsing
+		Invoke-WebRequest -Uri "$HostName/Content/Remotely-Win-$Platform.zip" -OutFile "$env:TEMP\Remotely-Win-$Platform.zip" -UseBasicParsing -MaximumRedirection 5
 		$ProgressPreference = 'Continue'
 	}
 
