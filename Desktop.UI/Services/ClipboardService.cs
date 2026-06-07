@@ -26,33 +26,17 @@ public class ClipboardService : IClipboardService
 
     private string ClipboardText { get; set; } = string.Empty;
 
-    public void BeginWatching()
-{
-    if (_watcherTask?.Status == TaskStatus.Running)
+   public void BeginWatching()
     {
-        return;
-    }
-
-    if (_dispatcher.Clipboard is null)
-    {
-        Dispatcher.UIThread.Invoke(() =>
+        if (_watcherTask?.Status == TaskStatus.Running)
         {
-            var window = new Window
-            {
-                Width = 1,
-                Height = 1,
-                ShowInTaskbar = false,
-                SystemDecorations = Avalonia.Controls.SystemDecorations.None,
-                Opacity = 0
-            };
-            _dispatcher.ShowMainWindow(window);
-        });
-    }
+            return;
+        }
 
-    _watcherTask = Task.Run(
-        async () => await WatchClipboard(_dispatcher.ApplicationExitingToken),
-        _dispatcher.ApplicationExitingToken);
-}
+        _watcherTask = Task.Run(
+            async () => await WatchClipboard(_dispatcher.ApplicationExitingToken),
+            _dispatcher.ApplicationExitingToken);
+    }
 
     public async Task SetText(string clipboardText)
     {
