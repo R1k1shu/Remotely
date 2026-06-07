@@ -127,30 +127,28 @@ public class ClipboardService : IClipboardService
                 }
 
                await _clipboardLock.WaitAsync(cancelToken);
-            try
-            {
-                var currentText = await Dispatcher.UIThread.InvokeAsync(
-                    async () => await clipboard.GetTextAsync());
+               try
+               {
+                    var currentText = await clipboard.GetTextAsync();
+                    if (!string.IsNullOrEmpty(currentText) && currentText != ClipboardText)
+                    {
+                        ClipboardText = currentText;
+                        ClipboardTextChanged?.Invoke(this, ClipboardText);
+                    }
+               }
+               finally
+               {
+                    _clipboardLock.Release();
+               }
 
-                if (!string.IsNullOrEmpty(currentText) && currentText != ClipboardText)
-                {
-                    ClipboardText = currentText;
-                    ClipboardTextChanged?.Invoke(this, ClipboardText);
-                }
-            }
-            finally
-            {
-                _clipboardLock.Release();
-            }
-
-            await Task.Delay(500, cancelToken);
-        }
-            catch (TaskCanceledException) { break; }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while watching clipboard.");
                 await Task.Delay(500, cancelToken);
             }
+                catch (TaskCanceledException) { break; }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error while watching clipboard.");
+                    await Task.Delay(500, cancelToken);
+                }
         }
     }
 }
