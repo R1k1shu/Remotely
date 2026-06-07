@@ -105,13 +105,13 @@ public class ClipboardService : IClipboardService
                                 };
                                 _dispatcher.ShowMainWindow(window);
                                 _logger.LogInformation("ClipboardService: window created, clipboard={clip}", _dispatcher.Clipboard is null ? "null" : "ok");
-                            });
-                        }
-                        catch (Exception winEx)
-                        {
+                             });
+                         }
+                         catch (Exception winEx)
+                         {
                             _logger.LogError(winEx, "ClipboardService: failed to create window");
+                         }
                         }
-                    }
                     else
                     {
                         _logger.LogWarning("Clipboard is null.");
@@ -128,6 +128,8 @@ public class ClipboardService : IClipboardService
                     ClipboardText = currentText;
                     ClipboardTextChanged?.Invoke(this, ClipboardText);
                 }
+
+                await Task.Delay(500, cancelToken); 
             }
             catch (TaskCanceledException)
             {
@@ -136,10 +138,7 @@ public class ClipboardService : IClipboardService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while watching clipboard.");
-            }
-            finally
-            {
-                await Task.Delay(500, cancelToken).ConfigureAwait(false);
+                await Task.Delay(500, cancelToken); 
             }
         }
     }
