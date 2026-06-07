@@ -2,6 +2,7 @@ using Remotely.Desktop.Shared.Abstractions;
 using Microsoft.Extensions.Logging;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using Avalonia.Input.Platform;
 
 namespace Remotely.Desktop.UI.Services;
 
@@ -11,6 +12,7 @@ public class ClipboardService : IClipboardService
     private readonly ILogger<ClipboardService> _logger;
     private Task? _watcherTask;
     private Window? _clipboardWindow;
+    private IClipboard? _windowClipboard;
 
     public event EventHandler<string>? ClipboardTextChanged;
 
@@ -31,7 +33,6 @@ public class ClipboardService : IClipboardService
             return;
         }
 
-        // Создаём невидимое окно для доступа к clipboard в headless режиме
         if (_dispatcher.Clipboard is null)
         {
             Dispatcher.UIThread.Post(() =>
@@ -46,6 +47,7 @@ public class ClipboardService : IClipboardService
                 };
                 _clipboardWindow.Show();
                 _dispatcher.ShowMainWindow(_clipboardWindow);
+                _windowClipboard = TopLevel.GetTopLevel(_clipboardWindow)?.Clipboard;
             });
         }
 
@@ -58,13 +60,12 @@ public class ClipboardService : IClipboardService
     {
         try
         {
-            var clipboard = _dispatcher.Clipboard ?? _clipboardWindow?.Clipboard;
+            var clipboard = _dispatcher.Clipboard ?? _windowClipboard;
             if (clipboard is null)
             {
                 _logger.LogWarning("Clipboard is null.");
                 return;
             }
-
             if (string.IsNullOrWhiteSpace(clipboardText))
             {
                 await clipboard.ClearAsync();
@@ -88,8 +89,7 @@ public class ClipboardService : IClipboardService
         {
             try
             {
-                // Ждём пока clipboard станет доступен
-                var clipboard = _dispatcher.Clipboard ?? _clipboardWindow?.Clipboard;
+                var clipboard = _dispatcher.Clipboard ?? _windowClipboard;
                 if (clipboard is null)
                 {
                     await Task.Delay(500, cancelToken);
