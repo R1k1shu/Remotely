@@ -85,7 +85,6 @@ public class ClipboardService : IClipboardService
                     if (!_windowCreated)
                     {
                         _windowCreated = true;
-                        _logger.LogInformation("ClipboardService: waiting for UI thread...");
 
                         // Ждём пока Avalonia запустится
                         var waited = 0;
@@ -95,12 +94,10 @@ public class ClipboardService : IClipboardService
                             waited += 200;
                         }
 
-                        _logger.LogInformation("ClipboardService: creating window, app={app}", _dispatcher.CurrentApp is null ? "null" : "ok");
                         try
                         {
                             await Dispatcher.UIThread.InvokeAsync(() =>
                             {
-                                _logger.LogInformation("ClipboardService: inside UIThread");
                                 var window = new Window
                                 {
                                     Width = 1,
@@ -110,7 +107,6 @@ public class ClipboardService : IClipboardService
                                     Opacity = 0
                                 };
                                 _dispatcher.ShowMainWindow(window);
-                                _logger.LogInformation("ClipboardService: window created, clipboard={clip}", _dispatcher.Clipboard is null ? "null" : "ok");
                              });
                          }
                          catch (Exception winEx)
