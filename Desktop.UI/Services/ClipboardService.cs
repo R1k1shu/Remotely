@@ -63,6 +63,8 @@ public class ClipboardService : IClipboardService
         }
     }
 
+    private bool _windowCreated = false;
+    
     private async Task WatchClipboard(CancellationToken cancelToken)
     {
         while (
@@ -71,9 +73,25 @@ public class ClipboardService : IClipboardService
         {
             try
             {
-                var clipboard = _dispatcher.Clipboard ?? _windowClipboard;
+                var clipboard = _dispatcher.Clipboard;
                 if (clipboard is null)
                 {
+                    if (!_windowCreated)
+                    {
+                        _windowCreated = true;
+                        await Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            var window = new Window
+                            {
+                                Width = 1,
+                                Height = 1,
+                                ShowInTaskbar = false,
+                                SystemDecorations = Avalonia.Controls.SystemDecorations.None,
+                                Opacity = 0
+                            };
+                            _dispatcher.ShowMainWindow(window);
+                        });
+                    }
                     await Task.Delay(500, cancelToken);
                     continue;
                 }
