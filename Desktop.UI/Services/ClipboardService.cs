@@ -42,19 +42,24 @@ public class ClipboardService : IClipboardService
     {
         try
         {
-            var clipboard = _dispatcher.Clipboard ?? _windowClipboard;
+            var clipboard = _dispatcher.Clipboard;
             if (clipboard is null)
             {
                 _logger.LogWarning("Clipboard is null.");
                 return;
             }
-            if (string.IsNullOrWhiteSpace(clipboardText))
+        
+            await _clipboardLock.WaitAsync();
+            try
             {
-                await clipboard.ClearAsync();
+                if (string.IsNullOrWhiteSpace(clipboardText))
+                    await clipboard.ClearAsync();
+                else
+                    await clipboard.SetTextAsync(clipboardText);
             }
-            else
+            finally
             {
-                await clipboard.SetTextAsync(clipboardText);
+                _clipboardLock.Release();
             }
         }
         catch (Exception ex)
@@ -64,6 +69,7 @@ public class ClipboardService : IClipboardService
     }
 
     private bool _windowCreated = false;
+    private readonly SemaphoreSlim _clipboardLock = new(1, 1);
     
     private async Task WatchClipboard(CancellationToken cancelToken)
     {
@@ -120,6 +126,9 @@ public class ClipboardService : IClipboardService
                     continue;
                 }
 
+               await _clipboardLock.WaitAsync(cancelToken);
+            try
+            {
                 var currentText = await Dispatcher.UIThread.InvokeAsync(
                     async () => await clipboard.GetTextAsync());
 
@@ -128,17 +137,19 @@ public class ClipboardService : IClipboardService
                     ClipboardText = currentText;
                     ClipboardTextChanged?.Invoke(this, ClipboardText);
                 }
-
-                await Task.Delay(500, cancelToken); 
             }
-            catch (TaskCanceledException)
+            finally
             {
-                break;
+                _clipboardLock.Release();
             }
+
+            await Task.Delay(500, cancelToken);
+        }
+            catch (TaskCanceledException) { break; }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while watching clipboard.");
-                await Task.Delay(500, cancelToken); 
+                await Task.Delay(500, cancelToken);
             }
         }
     }
