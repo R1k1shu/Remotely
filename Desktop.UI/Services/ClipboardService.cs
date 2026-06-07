@@ -79,18 +79,32 @@ public class ClipboardService : IClipboardService
                     if (!_windowCreated)
                     {
                         _windowCreated = true;
-                        await Dispatcher.UIThread.InvokeAsync(() =>
+                        _logger.LogInformation("ClipboardService: creating window...");
+                        try
                         {
-                            var window = new Window
+                            await Dispatcher.UIThread.InvokeAsync(() =>
                             {
-                                Width = 1,
-                                Height = 1,
-                                ShowInTaskbar = false,
-                                SystemDecorations = Avalonia.Controls.SystemDecorations.None,
-                                Opacity = 0
-                            };
-                            _dispatcher.ShowMainWindow(window);
-                        });
+                                _logger.LogInformation("ClipboardService: inside UIThread");
+                                var window = new Window
+                                {
+                                    Width = 1,
+                                    Height = 1,
+                                    ShowInTaskbar = false,
+                                    SystemDecorations = Avalonia.Controls.SystemDecorations.None,
+                                    Opacity = 0
+                                };
+                                _dispatcher.ShowMainWindow(window);
+                                _logger.LogInformation("ClipboardService: window created, clipboard={clip}", _dispatcher.Clipboard is null ? "null" : "ok");
+                            });
+                        }
+                        catch (Exception winEx)
+                        {
+                            _logger.LogError(winEx, "ClipboardService: failed to create window");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Clipboard is null.");
                     }
                     await Task.Delay(500, cancelToken);
                     continue;
