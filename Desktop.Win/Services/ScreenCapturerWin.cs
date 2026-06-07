@@ -144,7 +144,7 @@ public class ScreenCapturerWin : IScreenCapturer
                     // is getting put in the desktop, which causes SetThreadDesktop to fail.
                     // The caller can start a new thread, which seems to resolve it.
                     var errCode = Marshal.GetLastWin32Error();
-                    _logger.LogError("Failed to switch to input desktop. Last Win32 error code: {errCode}", errCode);
+                    _logger.LogDebug("Failed to switch to input desktop. Last Win32 error code: {errCode}", errCode);
                     return Result.Fail<SKBitmap>($"Failed to switch to input desktop. Last Win32 error code: {errCode}");
                 }
 
