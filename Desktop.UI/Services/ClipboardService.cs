@@ -79,7 +79,17 @@ public class ClipboardService : IClipboardService
                     if (!_windowCreated)
                     {
                         _windowCreated = true;
-                        _logger.LogInformation("ClipboardService: creating window...");
+                        _logger.LogInformation("ClipboardService: waiting for UI thread...");
+
+                        // Ждём пока Avalonia запустится
+                        var waited = 0;
+                        while (_dispatcher.CurrentApp is null && waited < 10000)
+                        {
+                            await Task.Delay(200, cancelToken);
+                            waited += 200;
+                        }
+
+                        _logger.LogInformation("ClipboardService: creating window, app={app}", _dispatcher.CurrentApp is null ? "null" : "ok");
                         try
                         {
                             await Dispatcher.UIThread.InvokeAsync(() =>
