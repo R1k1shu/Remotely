@@ -753,7 +753,7 @@ export function ApplyInputHandlers() {
 
     const pressedKeys = new Set<string>();
 
-    window.addEventListener("keydown", async function (e) {
+    document.addEventListener("keydown", async function (e) {
         if (
             document.querySelector("input:focus") ||
             document.querySelector("textarea:focus")
@@ -763,12 +763,10 @@ export function ApplyInputHandlers() {
         if (ViewerApp.ViewOnlyMode) {
             return;
         }
-        if (!e.ctrlKey || !e.shiftKey || e.key.toLowerCase() != "i") {
-            e.preventDefault();
-        }
+        e.preventDefault();
         pressedKeys.add(e.key);
         await ViewerApp.MessageSender.SendKeyDown(e.key);
-    });
+    }, { capture: true });
     window.addEventListener("keyup", async function (e) {
         if (
             document.querySelector("input:focus") ||
