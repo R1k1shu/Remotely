@@ -39,42 +39,57 @@ public class KeyboardMouseInputWin(
     }
 
     public void SendKeyDown(string key)
+{
+    TryOnInputDesktop(() =>
     {
-        TryOnInputDesktop(() =>
+        try
         {
             try
             {
-                try
+                if (!ConvertJavaScriptKeyToVirtualKey(key, out var vk))
                 {
-                    if (!ConvertJavaScriptKeyToVirtualKey(key, out var vk))
+                    _logger.LogWarning("Unable to simulate key input {key}.", key);
+                    return;
+                };
+
+                // Если нажимаем Alt когда Shift зажат, или Shift когда Alt зажат —
+                // отправляем как один батч для корректной смены языка
+                if (vk == VirtualKey.MENU)
+                {
+                    var (shiftPressed, _) = GetKeyPressState(VirtualKey.SHIFT);
+                    if (shiftPressed)
                     {
-                        _logger.LogWarning("Unable to simulate key input {key}.", key);
+                        var inputs = new INPUT[]
+                        {
+                            CreateKeyboardInput(VirtualKey.SHIFT, true),
+                            CreateKeyboardInput(VirtualKey.MENU, true)
+                        };
+                        SendInput((uint)inputs.Length, inputs, INPUT.Size);
                         return;
-                    };
-
-
-                    var input = CreateKeyboardInput(vk.Value, true);
-                    var sent = SendInput(1, [input], INPUT.Size);
-                    if (sent == 0)
-                    {
-                        _logger.LogWarning(
-                            "Failed to send input for key {Key}.  Last Win32 Error: {Win32Error}",
-                            key,
-                            Marshal.GetLastPInvokeError());
                     }
-
                 }
-                catch (Exception ex)
+
+                var input = CreateKeyboardInput(vk.Value, true);
+                var sent = SendInput(1, [input], INPUT.Size);
+                if (sent == 0)
                 {
-                    _logger.LogError(ex, "Error while sending key up.");
+                    _logger.LogWarning(
+                        "Failed to send input for key {Key}.  Last Win32 Error: {Win32Error}",
+                        key,
+                        Marshal.GetLastPInvokeError());
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while sending key down.");
+                _logger.LogError(ex, "Error while sending key up.");
             }
-        });
-    }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while sending key down.");
+        }
+    });
+}
 
     public void SendKeyUp(string key)
     {
