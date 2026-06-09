@@ -781,10 +781,15 @@ export function ApplyInputHandlers() {
     });
 
     window.addEventListener("blur", async () => {
-        if (ViewerApp.ViewOnlyMode) {
-            return;
-        }
-        await ViewerApp.MessageSender.SendSetKeyStatesUp();
+    if (ViewerApp.ViewOnlyMode) {
+        return;
+    }
+    // Задержка чтобы не сбрасывать клавиши при смене языка (Shift+Alt)
+    await new Promise(resolve => setTimeout(resolve, 200));
+    if (document.hasFocus()) {
+        return;
+    }
+    await ViewerApp.MessageSender.SendSetKeyStatesUp();
     });
 
     window.addEventListener("touchstart", () => {
