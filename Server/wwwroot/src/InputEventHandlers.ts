@@ -751,6 +751,8 @@ export function ApplyInputHandlers() {
         );
     });
 
+    const pressedKeys = new Set<string>();
+
     window.addEventListener("keydown", async function (e) {
         if (
             document.querySelector("input:focus") ||
@@ -764,6 +766,7 @@ export function ApplyInputHandlers() {
         if (!e.ctrlKey || !e.shiftKey || e.key.toLowerCase() != "i") {
             e.preventDefault();
         }
+        pressedKeys.add(e.key);
         await ViewerApp.MessageSender.SendKeyDown(e.key);
     });
     window.addEventListener("keyup", async function (e) {
@@ -777,6 +780,10 @@ export function ApplyInputHandlers() {
         if (ViewerApp.ViewOnlyMode) {
             return;
         }
+        if (!pressedKeys.has(e.key)) {
+            return;
+        }
+        pressedKeys.delete(e.key);
         await ViewerApp.MessageSender.SendKeyUp(e.key);
     });
 
