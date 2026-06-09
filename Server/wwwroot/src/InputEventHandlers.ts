@@ -765,6 +765,12 @@ export function ApplyInputHandlers() {
         }
         e.preventDefault();
         pressedKeys.add(e.key);
+
+        if ((e.key === "Alt" && e.shiftKey) || (e.key === "Shift" && e.altKey)) {
+        await ViewerApp.MessageSender.SendKeyUp("Shift");
+        await ViewerApp.MessageSender.SendKeyUp("Alt");
+        }
+        
         await ViewerApp.MessageSender.SendKeyDown(e.key);
     }, { capture: true });
     window.addEventListener("keyup", async function (e) {
