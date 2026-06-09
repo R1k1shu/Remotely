@@ -129,29 +129,49 @@ public class AgentHub : Hub<IAgentHubClient>
     }
 
     public async Task CheckForPendingScriptRuns()
+{
+    if (Device is null)
     {
-        if (Device is null)
-        {
-            return;
-        }
-
-        var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
-        var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
-
-        foreach (var run in scriptRuns)
-        {
-            if (run.SavedScriptId is null)
-            {
-                continue;
-            }
-            await Clients.Caller.RunScript(
-                run.SavedScriptId.Value,
-                run.Id,
-                run.Initiator ?? "Unknown Initiator",
-                run.InputType,
-                authToken);
-        }
+        return;
     }
+    var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
+    var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
+    foreach (var run in scriptRuns)
+    {
+        if (run.SavedScriptId is null)
+        {
+            continue;
+        }
+
+        // Создаём placeholder чтобы скрипт не отправлялся повторно
+        var placeholderResult = new Remotely.Shared.Dtos.ScriptResultDto
+        {
+            DeviceID = Device.ID,
+            SavedScriptId = run.SavedScriptId,
+            ScriptRunId = run.Id,
+            InputType = run.InputType,
+            SenderUserName = run.Initiator ?? "Unknown",
+            Shell = Remotely.Shared.Enums.ScriptingShell.PSCore,
+            ScriptInput = string.Empty,
+            StandardOutput = Array.Empty<string>(),
+            ErrorOutput = Array.Empty<string>(),
+            RunTime = TimeSpan.Zero,
+            HadErrors = false
+        };
+        var resultAdded = await _dataService.AddScriptResult(placeholderResult);
+        if (resultAdded.IsSuccess)
+        {
+            await _dataService.AddScriptResultToScriptRun(resultAdded.Value.ID, run.Id);
+        }
+
+        await Clients.Caller.RunScript(
+            run.SavedScriptId.Value,
+            run.Id,
+            run.Initiator ?? "Unknown Initiator",
+            run.InputType,
+            authToken);
+    }
+}
 
     public async Task<bool> DeviceCameOnline(DeviceClientDto device)
     {
