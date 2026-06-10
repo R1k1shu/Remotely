@@ -1652,7 +1652,7 @@ public class DataService : IDataService
         return device.ScriptRuns
         .OrderByDescending(x => x.RunAt)
         .DistinctBy(x => x.SavedScriptId)
-        .Where(x => !x.Results.Any()) // если у ScriptRun уже есть любые результаты — пропускаем
+        .Where(x => !(x.Results?.Any() ?? false)) // если у ScriptRun уже есть любые результаты — пропускаем
         .ToArray();
     }
 
