@@ -140,8 +140,10 @@ public class AgentHub : Hub<IAgentHubClient>
         }
 
         var deviceSentRuns = _sentScriptRuns.GetOrAdd(Device.ID, _ => new ConcurrentDictionary<int, bool>());
-        _logger.LogInformation("_sentScriptRuns keys: {keys}, Device.ID: {deviceId}",
-            string.Join(",", _sentScriptRuns.Keys.Take(3)), Device.ID);
+        _logger.LogInformation("Device {deviceId} in _sentScriptRuns: {exists}, runs: {runs}",
+            Device.ID,
+            _sentScriptRuns.ContainsKey(Device.ID),
+            string.Join(",", deviceSentRuns.Keys));
 
         var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
         var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
