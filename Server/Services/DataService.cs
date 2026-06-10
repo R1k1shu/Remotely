@@ -1650,10 +1650,11 @@ public class DataService : IDataService
             .ToHashSet();
 
         return device.ScriptRuns
-            .OrderByDescending(x => x.RunAt)
-            .DistinctBy(x => x.SavedScriptId)
-            .Where(x => !scriptResultsLookup.Contains(x.Id))
-            .ToArray();
+        .OrderByDescending(x => x.RunAt)
+        .DistinctBy(x => x.SavedScriptId)
+        .Where(x => !scriptResultsLookup.Contains(x.Id))
+        .Where(x => x.RunAt < DateTimeOffset.UtcNow.AddMinutes(-10)) // не отправлять свежие
+        .ToArray();
     }
 
     public async Task<List<SavedScript>> GetQuickScripts(string userId)
