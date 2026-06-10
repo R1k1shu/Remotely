@@ -39,57 +39,66 @@ public class KeyboardMouseInputWin(
     }
 
     public void SendKeyDown(string key)
-{
-    TryOnInputDesktop(() =>
     {
-        try
+        TryOnInputDesktop(() =>
         {
             try
             {
-                if (!ConvertJavaScriptKeyToVirtualKey(key, out var vk))
+                try
                 {
-                    _logger.LogWarning("Unable to simulate key input {key}.", key);
-                    return;
-                };
-
-                // Если нажимаем Alt когда Shift зажат, или Shift когда Alt зажат —
-                // отправляем как один батч для корректной смены языка
-                if (vk == VirtualKey.MENU)
-                {
-                    var (shiftPressed, _) = GetKeyPressState(VirtualKey.SHIFT);
-                    if (shiftPressed)
+                    if (!ConvertJavaScriptKeyToVirtualKey(key, out var vk))
                     {
-                        var inputs = new INPUT[]
-                        {
-                            CreateKeyboardInput(VirtualKey.SHIFT, true),
-                            CreateKeyboardInput(VirtualKey.MENU, true)
-                        };
-                        SendInput((uint)inputs.Length, inputs, INPUT.Size);
+                        _logger.LogWarning("Unable to simulate key input {key}.", key);
                         return;
                     }
-                }
+                    ;
 
-                var input = CreateKeyboardInput(vk.Value, true);
-                var sent = SendInput(1, [input], INPUT.Size);
-                if (sent == 0)
+                    if (vk == VirtualKey.MENU)
+                    {
+                        var (shiftPressed, _) = GetKeyPressState(VirtualKey.SHIFT);
+                        if (shiftPressed)
+                        {
+                            // Сначала отпускаем обе клавиши
+                            var releaseInputs = new INPUT[]
+                            {
+                                CreateKeyboardInput(VirtualKey.SHIFT, false),
+                                CreateKeyboardInput(VirtualKey.MENU, false)
+                            };
+                            SendInput((uint)releaseInputs.Length, releaseInputs, INPUT.Size);
+                            Thread.Sleep(50);
+
+                            // Затем нажимаем обе вместе
+                            var pressInputs = new INPUT[]
+                            {
+                                CreateKeyboardInput(VirtualKey.SHIFT, true),
+                                CreateKeyboardInput(VirtualKey.MENU, true)
+                            };
+                            SendInput((uint)pressInputs.Length, pressInputs, INPUT.Size);
+                            return;
+                        }
+                    }
+
+                    var input = CreateKeyboardInput(vk.Value, true);
+                    var sent = SendInput(1, [input], INPUT.Size);
+                    if (sent == 0)
+                    {
+                        _logger.LogWarning(
+                            "Failed to send input for key {Key}.  Last Win32 Error: {Win32Error}",
+                            key,
+                            Marshal.GetLastPInvokeError());
+                    }
+                }
+                catch (Exception ex)
                 {
-                    _logger.LogWarning(
-                        "Failed to send input for key {Key}.  Last Win32 Error: {Win32Error}",
-                        key,
-                        Marshal.GetLastPInvokeError());
+                    _logger.LogError(ex, "Error while sending key up.");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while sending key up.");
+                _logger.LogError(ex, "Error while sending key down.");
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error while sending key down.");
-        }
-    });
-}
+        });
+    }
 
     public void SendKeyUp(string key)
     {
@@ -101,7 +110,8 @@ public class KeyboardMouseInputWin(
                 {
                     _logger.LogWarning("Unable to simulate key input {key}.", key);
                     return;
-                };
+                }
+                ;
 
 
                 var input = CreateKeyboardInput(vk.Value, false);
