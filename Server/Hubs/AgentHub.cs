@@ -129,7 +129,8 @@ public class AgentHub : Hub<IAgentHubClient>
         }
     }
 
-    private static readonly ConcurrentDictionary<string, HashSet<int>> _sentScriptRuns = new();
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, bool>> _sentScriptRuns = new();
+
 
     public async Task CheckForPendingScriptRuns()
     {
@@ -138,7 +139,7 @@ public class AgentHub : Hub<IAgentHubClient>
             return;
         }
 
-        var deviceSentRuns = _sentScriptRuns.GetOrAdd(Device.ID, _ => new HashSet<int>());
+        var deviceSentRuns = _sentScriptRuns.GetOrAdd(Device.ID, _ => new ConcurrentDictionary<int, bool>());
 
         var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
         var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
@@ -150,7 +151,7 @@ public class AgentHub : Hub<IAgentHubClient>
             }
 
             // Пропускаем если уже отправляли в этой сессии
-            if (!deviceSentRuns.Add(run.Id))
+            if (!deviceSentRuns.TryAdd(run.Id, true))
             {
                 continue;
             }
