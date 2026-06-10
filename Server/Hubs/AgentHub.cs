@@ -143,6 +143,8 @@ public class AgentHub : Hub<IAgentHubClient>
 
         var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
         var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
+        _logger.LogInformation("GetPendingScriptRuns returned {count} runs for device {deviceId}: {runs}",
+            scriptRuns.Count(), Device.ID, string.Join(",", scriptRuns.Select(x => x.Id)));
         foreach (var run in scriptRuns)
         {
             _logger.LogInformation("CheckForPendingScriptRuns: device={deviceId}, sentRuns={sentRuns}",
@@ -186,6 +188,9 @@ public class AgentHub : Hub<IAgentHubClient>
             {
                 _logger.LogWarning("Failed to create placeholder for ScriptRun {runId}: {error}", run.Id, resultAdded.Reason);
             }
+
+            // Небольшая задержка чтобы placeholder успел записаться
+            await Task.Delay(500);
 
             await Clients.Caller.RunScript(
                 run.SavedScriptId.Value,
