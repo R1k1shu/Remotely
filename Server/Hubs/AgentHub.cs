@@ -129,49 +129,56 @@ public class AgentHub : Hub<IAgentHubClient>
     }
 
     public async Task CheckForPendingScriptRuns()
-{
-    if (Device is null)
     {
-        return;
-    }
-    var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
-    var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
-    foreach (var run in scriptRuns)
-    {
-        if (run.SavedScriptId is null)
+        if (Device is null)
         {
-            continue;
+            return;
         }
+        var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
+        var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
+        foreach (var run in scriptRuns)
+        {
+            if (run.SavedScriptId is null)
+            {
+                continue;
+            }
 
-        // Создаём placeholder чтобы скрипт не отправлялся повторно
-        var placeholderResult = new Remotely.Shared.Dtos.ScriptResultDto
-        {
-            DeviceID = Device.ID,
-            SavedScriptId = run.SavedScriptId,
-            ScriptRunId = run.Id,
-            InputType = run.InputType,
-            SenderUserName = run.Initiator ?? "Unknown",
-            Shell = Remotely.Shared.Enums.ScriptingShell.PSCore,
-            ScriptInput = string.Empty,
-            StandardOutput = Array.Empty<string>(),
-            ErrorOutput = Array.Empty<string>(),
-            RunTime = TimeSpan.Zero,
-            HadErrors = false
-        };
-        var resultAdded = await _dataService.AddScriptResult(placeholderResult);
-        if (resultAdded.IsSuccess)
-        {
-            await _dataService.AddScriptResultToScriptRun(resultAdded.Value.ID, run.Id);
+            // Создаём placeholder чтобы скрипт не отправлялся повторно
+            var placeholderResult = new Remotely.Shared.Dtos.ScriptResultDto
+            {
+                DeviceID = Device.ID,
+                SavedScriptId = run.SavedScriptId,
+                ScriptRunId = run.Id,
+                InputType = run.InputType,
+                SenderUserName = run.Initiator ?? "Unknown",
+                Shell = Remotely.Shared.Enums.ScriptingShell.PSCore,
+                ScriptInput = string.Empty,
+                StandardOutput = Array.Empty<string>(),
+                ErrorOutput = Array.Empty<string>(),
+                RunTime = TimeSpan.Zero,
+                HadErrors = false
+            };
+
+            var resultAdded = await _dataService.AddScriptResult(placeholderResult);
+            
+            if (resultAdded.IsSuccess)
+            {
+                await _dataService.AddScriptResultToScriptRun(resultAdded.Value.ID, run.Id);
+                _logger.LogInformation("Placeholder created for ScriptRun {runId} on device {deviceId}", run.Id, Device.ID);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to create placeholder for ScriptRun {runId}: {error}", run.Id, resultAdded.Error);
+            }
+
+            await Clients.Caller.RunScript(
+                run.SavedScriptId.Value,
+                run.Id,
+                run.Initiator ?? "Unknown Initiator",
+                run.InputType,
+                authToken);
         }
-
-        await Clients.Caller.RunScript(
-            run.SavedScriptId.Value,
-            run.Id,
-            run.Initiator ?? "Unknown Initiator",
-            run.InputType,
-            authToken);
     }
-}
 
     public async Task<bool> DeviceCameOnline(DeviceClientDto device)
     {
