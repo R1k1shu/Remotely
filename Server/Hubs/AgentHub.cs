@@ -146,9 +146,12 @@ public class AgentHub : Hub<IAgentHubClient>
             string.Join(",", deviceSentRuns.Keys));
 
         var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
+        
         var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
         _logger.LogInformation("GetPendingScriptRuns returned {count} runs for device {deviceId}: {runs}",
             scriptRuns.Count(), Device.ID, string.Join(",", scriptRuns.Select(x => x.Id)));
+        
+
         foreach (var run in scriptRuns)
         {
             _logger.LogInformation("CheckForPendingScriptRuns: device={deviceId}, sentRuns={sentRuns}",
@@ -160,7 +163,10 @@ public class AgentHub : Hub<IAgentHubClient>
             }
 
             // Пропускаем если уже отправляли в этой сессии
-            if (!deviceSentRuns.TryAdd(run.Id, true))
+            var added = deviceSentRuns.TryAdd(run.Id, true);
+            _logger.LogInformation("TryAdd ScriptRun {runId} for device {deviceId}: {added}, runs: {runs}",
+                run.Id, Device.ID, added, string.Join(",", deviceSentRuns.Keys));
+            if (!added)
             {
                 continue;
             }
