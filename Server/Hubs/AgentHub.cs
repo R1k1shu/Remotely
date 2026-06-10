@@ -10,6 +10,7 @@ using Remotely.Shared.Enums;
 using Remotely.Shared.Interfaces;
 using Remotely.Shared.Models;
 using Remotely.Shared.Utilities;
+using System.Collections.Concurrent;
 
 namespace Remotely.Server.Hubs;
 
@@ -128,17 +129,28 @@ public class AgentHub : Hub<IAgentHubClient>
         }
     }
 
+    private static readonly ConcurrentDictionary<string, HashSet<int>> _sentScriptRuns = new();
+
     public async Task CheckForPendingScriptRuns()
     {
         if (Device is null)
         {
             return;
         }
+
+        var deviceSentRuns = _sentScriptRuns.GetOrAdd(Device.ID, _ => new HashSet<int>());
+
         var authToken = _expiringTokenService.GetToken(Time.Now.AddMinutes(AppConstants.ScriptRunExpirationMinutes));
         var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
         foreach (var run in scriptRuns)
         {
             if (run.SavedScriptId is null)
+            {
+                continue;
+            }
+
+            // Пропускаем если уже отправляли в этой сессии
+            if (!deviceSentRuns.Add(run.Id))
             {
                 continue;
             }
