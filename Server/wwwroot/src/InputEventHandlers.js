@@ -542,7 +542,8 @@ export function ApplyInputHandlers() {
         ShowToast("Switching sessions");
         await ViewerApp.MessageSender.ChangeWindowsSession(Number(WindowsSessionSelect.selectedOptions[0].value));
     });
-    window.addEventListener("keydown", async function (e) {
+    const pressedKeys = new Set();
+    document.addEventListener("keydown", async function (e) {
         if (document.querySelector("input:focus") ||
             document.querySelector("textarea:focus")) {
             return;
@@ -550,11 +551,15 @@ export function ApplyInputHandlers() {
         if (ViewerApp.ViewOnlyMode) {
             return;
         }
-        if (!e.ctrlKey || !e.shiftKey || e.key.toLowerCase() != "i") {
-            e.preventDefault();
+        e.preventDefault();
+        pressedKeys.add(e.key);
+        if ((e.key === "Alt" && e.shiftKey) || (e.key === "Shift" && e.altKey)) {
+            await ViewerApp.MessageSender.SendKeyUp("Shift");
+            await ViewerApp.MessageSender.SendKeyUp("Alt");
         }
-        await ViewerApp.MessageSender.SendKeyDown(e.key);
-    });
+        const keyToSend = e.key.length === 1 ? e.code : e.key;
+        await ViewerApp.MessageSender.SendKeyDown(keyToSend);
+    }, { capture: true });
     window.addEventListener("keyup", async function (e) {
         if (document.querySelector("input:focus") ||
             document.querySelector("textarea:focus")) {
@@ -564,10 +569,20 @@ export function ApplyInputHandlers() {
         if (ViewerApp.ViewOnlyMode) {
             return;
         }
-        await ViewerApp.MessageSender.SendKeyUp(e.key);
+        if (!pressedKeys.has(e.key)) {
+            return;
+        }
+        pressedKeys.delete(e.key);
+        const keyToSend = e.key.length === 1 ? e.code : e.key;
+        await ViewerApp.MessageSender.SendKeyUp(keyToSend);
     });
     window.addEventListener("blur", async () => {
         if (ViewerApp.ViewOnlyMode) {
+            return;
+        }
+        // Задержка чтобы не сбрасывать клавиши при смене языка (Shift+Alt)
+        await new Promise(resolve => setTimeout(resolve, 200));
+        if (document.hasFocus()) {
             return;
         }
         await ViewerApp.MessageSender.SendSetKeyStatesUp();

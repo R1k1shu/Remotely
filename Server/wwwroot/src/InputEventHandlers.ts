@@ -771,7 +771,8 @@ export function ApplyInputHandlers() {
         await ViewerApp.MessageSender.SendKeyUp("Alt");
         }
         
-        await ViewerApp.MessageSender.SendKeyDown(e.key);
+        const keyToSend = e.key.length === 1 ? e.code : e.key;
+        await ViewerApp.MessageSender.SendKeyDown(keyToSend);
     }, { capture: true });
     window.addEventListener("keyup", async function (e) {
         if (
@@ -788,7 +789,8 @@ export function ApplyInputHandlers() {
             return;
         }
         pressedKeys.delete(e.key);
-        await ViewerApp.MessageSender.SendKeyUp(e.key);
+        const keyToSend = e.key.length === 1 ? e.code : e.key;
+        await ViewerApp.MessageSender.SendKeyUp(keyToSend);
     });
 
     window.addEventListener("blur", async () => {
