@@ -1644,16 +1644,15 @@ public class DataService : IDataService
 
         device.ScriptResults ??= new();
         var scriptResultsLookup = device.ScriptResults
-            .Where(x => x.ScriptRunId.HasValue)
-            .Select(x => x.ScriptRunId!.Value)
-            .Distinct()
-            .ToHashSet();
+        .Where(x => x.ScriptRunId.HasValue)
+        .Select(x => x.ScriptRunId!.Value)
+        .Distinct()
+        .ToHashSet();
 
         return device.ScriptRuns
         .OrderByDescending(x => x.RunAt)
         .DistinctBy(x => x.SavedScriptId)
-        .Where(x => !scriptResultsLookup.Contains(x.Id))
-        .Where(x => x.RunAt < DateTimeOffset.UtcNow.AddMinutes(-10)) // не отправлять свежие
+        .Where(x => !x.Results.Any()) // если у ScriptRun уже есть любые результаты — пропускаем
         .ToArray();
     }
 
