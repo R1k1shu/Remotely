@@ -168,7 +168,7 @@ public class AgentHub : Hub<IAgentHubClient>
             }
             else
             {
-                _logger.LogWarning("Failed to create placeholder for ScriptRun {runId}: {error}", run.Id, resultAdded.Error);
+                _logger.LogWarning("Failed to create placeholder for ScriptRun {runId}: {error}", run.Id, resultAdded.Reason);
             }
 
             await Clients.Caller.RunScript(
