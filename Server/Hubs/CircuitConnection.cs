@@ -331,8 +331,33 @@ public class CircuitConnection : CircuitHandler, ICircuitConnection
                 $"{username}",
                 scriptInputType,
                 authToken);
-        }
 
+            // Создаём placeholder для каждого устройства чтобы предотвратить повторный запуск
+            foreach (var deviceId in deviceIds)
+            {
+                if (!_agentSessionCache.TryGetByDeviceId(deviceId, out var device)) continue;
+                if (device is null) continue;
+                var placeholder = new Remotely.Shared.Dtos.ScriptResultDto
+                {
+                    DeviceID = deviceId,
+                    SavedScriptId = savedScriptId,
+                    ScriptRunId = scriptRunId,
+                    InputType = scriptInputType,
+                    SenderUserName = username,
+                    Shell = Remotely.Shared.Enums.ScriptingShell.PSCore,
+                    ScriptInput = string.Empty,
+                    StandardOutput = Array.Empty<string>(),
+                    ErrorOutput = Array.Empty<string>(),
+                    RunTime = TimeSpan.Zero,
+                    HadErrors = false
+                };
+                var result = await _dataService.AddScriptResult(placeholder);
+                if (result.IsSuccess)
+                {
+                    await _dataService.AddScriptResultToScriptRun(result.Value.ID, scriptRunId);
+                }
+            }
+        }
     }
 
     public async Task SendChat(string message, string deviceId, bool isDisconnecting = false)
