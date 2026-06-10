@@ -1,4 +1,5 @@
-﻿using Remotely.Shared.Models;
+﻿
+using Remotely.Shared.Models;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -1660,7 +1661,7 @@ public class DataService : IDataService
         using var dbContext = _appDbFactory.GetContext();
 
         return await dbContext.SavedScripts
-            .Where(x => x.CreatorId == userId && x.IsQuickScript)
+            .Where(x => x.IsQuickScript && (x.CreatorId == userId || x.IsPublic))
             .ToListAsync();
     }
 
