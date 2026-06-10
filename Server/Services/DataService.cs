@@ -18,7 +18,7 @@ namespace Remotely.Server.Services;
 public interface IDataService
 {
     Task AddAlert(string deviceId, string organizationId, string alertMessage, string? details = null);
-    
+
     Task<Result<DeviceGroup>> AddDeviceGroup(string orgId, DeviceGroup deviceGroup);
     Task<Result> RenameDeviceGroup(string orgId, string deviceGroupId, string newName);
     Task<Result> AddDeviceToGroup(string deviceId, string groupId);
@@ -172,7 +172,7 @@ public interface IDataService
     Task<Result<RemotelyUser>> GetUserById(string userId);
 
     Task<Result<RemotelyUser>> GetUserByName(
-        string userName, 
+        string userName,
         Action<IQueryable<RemotelyUser>>? queryBuilder = null);
 
     Task<Result<RemotelyUserOptions>> GetUserOptions(string userName);
@@ -310,7 +310,7 @@ public class DataService : IDataService
             return Result.Fail("Device not found.");
         }
 
-        var group = await context.DeviceGroups.FirstOrDefaultAsync(x => 
+        var group = await context.DeviceGroups.FirstOrDefaultAsync(x =>
             x.OrganizationID == device.OrganizationID &&
             x.ID == groupId);
 
@@ -688,7 +688,7 @@ public class DataService : IDataService
         {
             return Result.Fail<ApiToken>("User not found.");
         }
-        
+
         var newToken = new ApiToken()
         {
             Name = tokenName,
@@ -897,33 +897,33 @@ public class DataService : IDataService
 
     public async Task<Result> RenameDeviceGroup(string orgId, string deviceGroupId, string newName)
     {
-    if (string.IsNullOrWhiteSpace(newName))
-    {
-        return Result.Fail("Name cannot be empty.");
-    }
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            return Result.Fail("Name cannot be empty.");
+        }
 
-    using var dbContext = _appDbFactory.GetContext();
+        using var dbContext = _appDbFactory.GetContext();
 
-    if (dbContext.DeviceGroups.Any(x =>
-        x.OrganizationID == orgId &&
-        x.ID != deviceGroupId &&
-        x.Name.ToLower() == newName.ToLower()))
-    {
-        return Result.Fail("A device group with that name already exists.");
-    }
+        if (dbContext.DeviceGroups.Any(x =>
+            x.OrganizationID == orgId &&
+            x.ID != deviceGroupId &&
+            x.Name.ToLower() == newName.ToLower()))
+        {
+            return Result.Fail("A device group with that name already exists.");
+        }
 
-    var group = await dbContext.DeviceGroups.FirstOrDefaultAsync(x =>
-        x.ID == deviceGroupId &&
-        x.OrganizationID == orgId);
+        var group = await dbContext.DeviceGroups.FirstOrDefaultAsync(x =>
+            x.ID == deviceGroupId &&
+            x.OrganizationID == orgId);
 
-    if (group is null)
-    {
-        return Result.Fail("Device group not found.");
-    }
+        if (group is null)
+        {
+            return Result.Fail("Device group not found.");
+        }
 
-    group.Name = newName;
-    await dbContext.SaveChangesAsync();
-    return Result.Ok();
+        group.Name = newName;
+        await dbContext.SaveChangesAsync();
+        return Result.Ok();
     }
 
     public async Task<Result> DeleteInvite(string orgId, string inviteID)
@@ -1083,7 +1083,7 @@ public class DataService : IDataService
         return dbContext.Devices
             .Include(x => x.DeviceGroup)
             .ThenInclude(x => x!.Users)
-            .Any(device => 
+            .Any(device =>
                 device.OrganizationID == remotelyUser.OrganizationID &&
                 device.ID == deviceId &&
                 (
@@ -1339,7 +1339,7 @@ public class DataService : IDataService
         var org = await dbContext.Organizations
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.IsDefaultOrganization);
-        
+
         if (org is null)
         {
             return Result.Fail<Organization>("Organization not found.");
@@ -1643,7 +1643,8 @@ public class DataService : IDataService
 
         device.ScriptResults ??= new();
         var scriptResultsLookup = device.ScriptResults
-            .Select(x => x.ScriptRunId)
+            .Where(x => x.ScriptRunId.HasValue)
+            .Select(x => x.ScriptRunId!.Value)
             .Distinct()
             .ToHashSet();
 
@@ -1702,7 +1703,7 @@ public class DataService : IDataService
         return await dbContext.SavedScripts
             .AsNoTracking()
             .Include(x => x.Creator)
-            .Where(x => 
+            .Where(x =>
                 x.Creator!.OrganizationID == organizationId &&
                 (x.IsPublic || x.CreatorId == userId))
             .Select(x => new SavedScript()
@@ -2021,7 +2022,7 @@ public class DataService : IDataService
 
         var entry = dbContext.Entry(organization.BrandingInfo);
         entry.CurrentValues.SetValues(BrandingInfo.Default);
-        
+
         await dbContext.SaveChangesAsync();
     }
 
@@ -2249,7 +2250,7 @@ public class DataService : IDataService
         {
             return Result.Fail("Organization not found.");
         }
-        
+
         org.OrganizationName = newName;
         await dbContext.SaveChangesAsync();
         return Result.Ok();
@@ -2291,7 +2292,7 @@ public class DataService : IDataService
         var hasher = new PasswordHasher<string>();
         var token = await dbContext.ApiTokens.FirstOrDefaultAsync(x => x.ID == keyId);
 
-        var isValid = 
+        var isValid =
             !string.IsNullOrWhiteSpace(token?.Secret) &&
             hasher.VerifyHashedPassword(string.Empty, token.Secret, apiSecret) == PasswordVerificationResult.Success;
 
@@ -2302,7 +2303,7 @@ public class DataService : IDataService
         }
 
         _logger.LogInformation(
-            "API token used.  Token: {keyId}.  Path: {requestPath}.  Validated: {isValid}.  Remote IP: {remoteIP}", 
+            "API token used.  Token: {keyId}.  Path: {requestPath}.  Validated: {isValid}.  Remote IP: {remoteIP}",
             keyId,
             requestPath,
             isValid,
