@@ -48,7 +48,16 @@ public class KeyboardMouseInputWin(
                 {
                     if (!ConvertJavaScriptKeyToVirtualKey(key, out var vk))
                     {
-                        _logger.LogWarning("Unable to simulate key input {key}.", key);
+                        // Пробуем отправить как Unicode символ
+                        if (key.Length == 1)
+                        {
+                            var unicodeInput = CreateKeyboardInput((ushort)key[0], true);
+                            SendInput(1, [unicodeInput], INPUT.Size);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Unable to simulate key input {key}.", key);
+                        }
                         return;
                     }
                     ;
@@ -108,7 +117,16 @@ public class KeyboardMouseInputWin(
             {
                 if (!ConvertJavaScriptKeyToVirtualKey(key, out var vk))
                 {
-                    _logger.LogWarning("Unable to simulate key input {key}.", key);
+                    // Пробуем отправить как Unicode символ
+                    if (key.Length == 1)
+                    {
+                        var unicodeInput = CreateKeyboardInput((ushort)key[0], false);
+                        SendInput(1, [unicodeInput], INPUT.Size);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Unable to simulate key input {key}.", key);
+                    }
                     return;
                 }
                 ;
