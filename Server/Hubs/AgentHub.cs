@@ -145,6 +145,9 @@ public class AgentHub : Hub<IAgentHubClient>
         var scriptRuns = await _dataService.GetPendingScriptRuns(Device.ID);
         foreach (var run in scriptRuns)
         {
+            _logger.LogInformation("CheckForPendingScriptRuns: device={deviceId}, sentRuns={sentRuns}",
+                Device.ID, string.Join(",", deviceSentRuns.Keys));
+
             if (run.SavedScriptId is null)
             {
                 continue;
