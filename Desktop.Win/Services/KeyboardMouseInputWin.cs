@@ -38,6 +38,8 @@ public class KeyboardMouseInputWin(
         StartInputProcessingThread();
     }
 
+    private readonly ConcurrentDictionary<VirtualKey, bool> _pressedKeys = new();
+
     public void SendKeyDown(string key)
     {
         _logger.LogInformation("SendKeyDown: {key}", key);
@@ -62,10 +64,12 @@ public class KeyboardMouseInputWin(
                         return;
                     }
                     ;
+                    if (vk.HasValue)
+                        _pressedKeys[vk.Value] = true;
 
                     if (vk == VirtualKey.MENU)
                     {
-                        var (shiftPressed, _) = GetKeyPressState(VirtualKey.SHIFT);
+                        var shiftPressed = _pressedKeys.GetValueOrDefault(VirtualKey.SHIFT, false);
                         _logger.LogInformation("Alt pressed, shiftPressed={shiftPressed}", shiftPressed);
                         if (shiftPressed)
                         {
@@ -128,6 +132,8 @@ public class KeyboardMouseInputWin(
                 }
                 ;
 
+                if (vk.HasValue)
+                    _pressedKeys.TryRemove(vk.Value, out _);
 
                 var input = CreateKeyboardInput(vk.Value, false);
                 var sent = SendInput(1, [input], INPUT.Size);
@@ -335,6 +341,8 @@ public class KeyboardMouseInputWin(
 
     public void SetKeyStatesUp()
     {
+        _pressedKeys.Clear();
+
         TryOnInputDesktop(() =>
         {
             foreach (VirtualKey key in Enum.GetValues(typeof(VirtualKey)))
