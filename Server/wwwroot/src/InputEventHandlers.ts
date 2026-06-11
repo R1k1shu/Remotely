@@ -772,8 +772,10 @@ export function ApplyInputHandlers() {
         }
         
         const keyToSend = e.key.length === 1 ? e.code : e.key;
+        console.log("Sending keyToSend:", keyToSend);
         await ViewerApp.MessageSender.SendKeyDown(keyToSend);
     }, { capture: true });
+
     window.addEventListener("keyup", async function (e) {
         if (
             document.querySelector("input:focus") ||

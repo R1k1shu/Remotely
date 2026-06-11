@@ -40,6 +40,7 @@ public class KeyboardMouseInputWin(
 
     public void SendKeyDown(string key)
     {
+        _logger.LogInformation("SendKeyDown: {key}", key);
         TryOnInputDesktop(() =>
         {
             try
@@ -65,6 +66,7 @@ public class KeyboardMouseInputWin(
                     if (vk == VirtualKey.MENU)
                     {
                         var (shiftPressed, _) = GetKeyPressState(VirtualKey.SHIFT);
+                        _logger.LogInformation("Alt pressed, shiftPressed={shiftPressed}", shiftPressed);
                         if (shiftPressed)
                         {
                             // Получаем список раскладок и переключаем на следующую
