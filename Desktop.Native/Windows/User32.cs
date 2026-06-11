@@ -1069,6 +1069,18 @@ public static class User32
         MAPVK_VK_TO_VSC_EX = 4
     }
 
+    [DllImport("user32.dll")]
+    public static extern nint GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    public static extern bool PostMessage(nint hWnd, uint msg, nint wParam, nint lParam);
+
+    [DllImport("user32.dll")]
+    public static extern nint ActivateKeyboardLayout(nint hkl, uint flags);
+
+    [DllImport("user32.dll")]
+    public static extern int GetKeyboardLayoutList(int nBuff, [Out] nint[] lpList);
+
     #endregion
 
     #region Structs

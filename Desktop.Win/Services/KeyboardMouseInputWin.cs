@@ -67,22 +67,15 @@ public class KeyboardMouseInputWin(
                         var (shiftPressed, _) = GetKeyPressState(VirtualKey.SHIFT);
                         if (shiftPressed)
                         {
-                            // Сначала отпускаем обе клавиши
-                            var releaseInputs = new INPUT[]
-                            {
-                                CreateKeyboardInput(VirtualKey.SHIFT, false),
-                                CreateKeyboardInput(VirtualKey.MENU, false)
-                            };
-                            SendInput((uint)releaseInputs.Length, releaseInputs, INPUT.Size);
-                            Thread.Sleep(50);
-
-                            // Затем нажимаем обе вместе
-                            var pressInputs = new INPUT[]
-                            {
-                                CreateKeyboardInput(VirtualKey.SHIFT, true),
-                                CreateKeyboardInput(VirtualKey.MENU, true)
-                            };
-                            SendInput((uint)pressInputs.Length, pressInputs, INPUT.Size);
+                            // Получаем список раскладок и переключаем на следующую
+                            var count = GetKeyboardLayoutList(0, Array.Empty<nint>());
+                            var layouts = new nint[count];
+                            GetKeyboardLayoutList(count, layouts);
+                            var current = GetKeyboardLayout(0);
+                            var currentIndex = Array.IndexOf(layouts, current);
+                            var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
+                            var hwnd = GetForegroundWindow();
+                            PostMessage(hwnd, 0x0050, nextLayout, nextLayout); // WM_INPUTLANGCHANGEREQUEST
                             return;
                         }
                     }
