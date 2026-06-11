@@ -75,7 +75,9 @@ public class KeyboardMouseInputWin(
                             var currentIndex = Array.IndexOf(layouts, current);
                             var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
                             var hwnd = GetForegroundWindow();
-                            PostMessage(hwnd, 0x0050, nextLayout, nextLayout); // WM_INPUTLANGCHANGEREQUEST
+                            var result = PostMessage(hwnd, 0x0050, nextLayout, nextLayout);
+                            _logger.LogInformation("Language switch: hwnd={hwnd}, nextLayout={layout}, result={result}",
+                                hwnd, nextLayout, result);
                             return;
                         }
                     }
