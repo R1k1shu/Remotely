@@ -43,6 +43,25 @@ public class KeyboardMouseInputWin(
     public void SendKeyDown(string key)
     {
         _logger.LogInformation("SendKeyDown: {key}", key);
+
+        if (key == "ShiftAlt")
+        {
+            TryOnInputDesktop(() =>
+            {
+                var count = GetKeyboardLayoutList(0, Array.Empty<nint>());
+                var layouts = new nint[count];
+                GetKeyboardLayoutList(count, layouts);
+                var current = GetKeyboardLayout(0);
+                var currentIndex = Array.IndexOf(layouts, current);
+                var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
+                var hwnd = GetForegroundWindow();
+                var result = PostMessage(hwnd, 0x0050, nextLayout, nextLayout);
+                _logger.LogInformation("Language switch via ShiftAlt: hwnd={hwnd}, nextLayout={layout}, result={result}",
+                    hwnd, nextLayout, result);
+            });
+            return;
+        }
+
         TryOnInputDesktop(() =>
         {
             try

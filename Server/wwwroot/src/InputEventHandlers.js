@@ -556,6 +556,8 @@ export function ApplyInputHandlers() {
         if ((e.key === "Alt" && e.shiftKey) || (e.key === "Shift" && e.altKey)) {
             await ViewerApp.MessageSender.SendKeyUp("Shift");
             await ViewerApp.MessageSender.SendKeyUp("Alt");
+            await ViewerApp.MessageSender.SendKeyDown("ShiftAlt");
+            return;
         }
         const keyToSend = e.key.length === 1 ? e.code : e.key;
         console.log("Sending keyToSend:", keyToSend);
