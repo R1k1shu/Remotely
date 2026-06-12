@@ -53,11 +53,13 @@ public class KeyboardMouseInputWin(
                 GetKeyboardLayoutList(count, layouts);
                 var current = GetKeyboardLayout(0);
                 var currentIndex = Array.IndexOf(layouts, current);
+                _logger.LogInformation("Current layout: {current}, index: {index}, all: {all}",
+                    current, currentIndex, string.Join(",", layouts));
                 var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
+                ActivateKeyboardLayout(nextLayout, 0);
                 var hwnd = GetForegroundWindow();
-                var result = PostMessage(hwnd, 0x0050, nextLayout, nextLayout);
-                _logger.LogInformation("Language switch via ShiftAlt: hwnd={hwnd}, nextLayout={layout}, result={result}",
-                    hwnd, nextLayout, result);
+                PostMessage(hwnd, 0x0050, nextLayout, nextLayout);
+                _logger.LogInformation("Activated layout: {layout}, hwnd: {hwnd}", nextLayout, hwnd);
             });
             return;
         }
@@ -99,10 +101,10 @@ public class KeyboardMouseInputWin(
                             var current = GetKeyboardLayout(0);
                             var currentIndex = Array.IndexOf(layouts, current);
                             var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
+                            ActivateKeyboardLayout(nextLayout, 0);
                             var hwnd = GetForegroundWindow();
-                            var result = PostMessage(hwnd, 0x0050, nextLayout, nextLayout);
-                            _logger.LogInformation("Language switch: hwnd={hwnd}, nextLayout={layout}, result={result}",
-                                hwnd, nextLayout, result);
+                            PostMessage(hwnd, 0x0050, nextLayout, nextLayout); // WM_INPUTLANGCHANGEREQUEST
+                            _logger.LogInformation("Activated layout: {layout}, hwnd: {hwnd}", nextLayout, hwnd);
                             return;
                         }
                     }
