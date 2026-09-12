@@ -9,18 +9,33 @@
             <div>
                 <div>Device Group</div>
                 <div class="text-nowrap">
-                    <select class="form-control d-inline" style="width: 150px" @bind="_selectedGroupId">
-                        <option value="@_deviceGroupAll">All</option>
-                        <option value="@_deviceGroupNone">None</option>
-                        @foreach (var group in _deviceGroups)
+                    <div class="input-group" style="width: 200px">
+                        <input class="form-control"
+                               placeholder="Search groups..."
+                               @bind="_deviceGroupSearch"
+                               @bind:event="oninput" />
+                        @if (!string.IsNullOrWhiteSpace(_deviceGroupSearch))
                         {
-                            <option @key="group.ID" value="@group.ID">@group.Name</option>
+                            <button class="btn btn-outline-secondary" @onclick="() => _deviceGroupSearch = string.Empty">
+                                <span class="oi oi-x"></span>
+                            </button>
                         }
-                    </select>
+                    </div>
+                    <ul class="list-group mb-1" style="max-height: 200px; overflow-y: auto; width: 200px;">
+                        <li class="list-group-item list-group-item-action @(_selectedGroupId == _deviceGroupAll ? "active" : "")"
+                            @onclick="() => _selectedGroupId = _deviceGroupAll" style="cursor:pointer;">All</li>
+                        <li class="list-group-item list-group-item-action @(_selectedGroupId == _deviceGroupNone ? "active" : "")"
+                            @onclick="() => _selectedGroupId = _deviceGroupNone" style="cursor:pointer;">None</li>
+                        @foreach (var group in FilteredDeviceGroups)
+                        {
+                            <li @key="group.ID"
+                                class="list-group-item list-group-item-action @(_selectedGroupId == group.ID ? "active" : "")"
+                                @onclick="() => _selectedGroupId = group.ID" style="cursor:pointer;">@group.Name</li>
+                        }
+                    </ul>
                     <button class="btn btn-sm btn-secondary" title="Wake Devices in Group" style="width: 40px; margin-left: 5px;" @onclick="WakeDevices">
                         <span class="oi oi-power-standby"></span>
                     </button>
-
                 </div>
             </div>
 

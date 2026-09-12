@@ -33,6 +33,12 @@ public partial class DevicesFrame : AuthComponentBase
     private bool _hideOfflineDevices = true;
     private string _lastFilterState = string.Empty;
     private string? _selectedGroupId;
+    private string _deviceGroupSearch = string.Empty;
+
+    private IEnumerable<DeviceGroup> FilteredDeviceGroups =>
+        string.IsNullOrWhiteSpace(_deviceGroupSearch)
+            ? _deviceGroups
+            : _deviceGroups.Where(x => x.Name.Contains(_deviceGroupSearch, StringComparison.OrdinalIgnoreCase));
     private string _selectedSortProperty = "DeviceName";
     private ListSortDirection _sortDirection;
 
