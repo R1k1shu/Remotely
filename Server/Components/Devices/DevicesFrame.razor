@@ -9,7 +9,7 @@
             <div>
                 <div>Device Group</div>
                 <div class="text-nowrap">
-                    <div class="input-group" style="width: 250px">
+                    <div class="input-group" style="width: fit-content; min-width: 250px">
                         <input class="form-control"
                                placeholder="Search groups..."
                                @bind="_deviceGroupSearch"
@@ -21,7 +21,7 @@
                             </button>
                         }
                     </div>
-                    <ul class="list-group mb-1" style="max-height: 200px; overflow-y: auto; width: 250px;">
+                    <ul class="list-group mb-1" style="max-height: 200px; overflow-y: auto; min-width: 250px;">
                         <li class="list-group-item list-group-item-action @(_selectedGroupId == _deviceGroupAll ? "active" : "")"
                             @onclick="() => _selectedGroupId = _deviceGroupAll" style="cursor:pointer;">All</li>
                         <li class="list-group-item list-group-item-action @(_selectedGroupId == _deviceGroupNone ? "active" : "")"
@@ -68,7 +68,7 @@
                 <div>
                     <div>Search</div>
                     <input class="form-control d-inline"
-                           style="width: 250px"
+                           style="width: fit-content; min-width: 250px"
                            placeholder="Search device properties"
                            @bind="_filter" />
                 </div>
