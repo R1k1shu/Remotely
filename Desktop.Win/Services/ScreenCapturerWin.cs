@@ -253,14 +253,7 @@ public class ScreenCapturerWin : IScreenCapturer
             using var bitmap = new Bitmap(CurrentScreenBounds.Width, CurrentScreenBounds.Height, PixelFormat.Format32bppRgb);
             using (var graphic = Graphics.FromImage(bitmap))
             {
-                // CaptureBlt includes layered windows, which are otherwise rendered black.
-                graphic.CopyFromScreen(
-                    CurrentScreenBounds.Left,
-                    CurrentScreenBounds.Top,
-                    0,
-                    0,
-                    new Size(CurrentScreenBounds.Width, CurrentScreenBounds.Height),
-                    CopyPixelOperation.SourceCopy | CopyPixelOperation.CaptureBlt);
+                graphic.CopyFromScreen(CurrentScreenBounds.Left, CurrentScreenBounds.Top, 0, 0, new Size(CurrentScreenBounds.Width, CurrentScreenBounds.Height));
             }
             return Result.Ok(bitmap.ToSKBitmap());
         }
