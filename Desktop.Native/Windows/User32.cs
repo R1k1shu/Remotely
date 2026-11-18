@@ -1081,6 +1081,30 @@ public static class User32
     [DllImport("user32.dll")]
     public static extern int GetKeyboardLayoutList(int nBuff, [Out] nint[] lpList);
 
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetGUIThreadInfo(uint idThread, ref GUITHREADINFO lpgui);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct GUITHREADINFO
+    {
+        public int cbSize;
+        public uint flags;
+        public nint hwndActive;
+        public nint hwndFocus;
+        public nint hwndCapture;
+        public nint hwndMenuOwner;
+        public nint hwndMoveSize;
+        public nint hwndCaret;
+        public int rcCaretLeft;
+        public int rcCaretTop;
+        public int rcCaretRight;
+        public int rcCaretBottom;
+    }
+
     #endregion
 
     #region Structs
