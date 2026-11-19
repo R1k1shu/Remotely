@@ -250,7 +250,7 @@ public class ScreenCapturerWin : IScreenCapturer
     {
         try
         {
-            using var bitmap = new Bitmap(CurrentScreenBounds.Width, CurrentScreenBounds.Height, PixelFormat.Format32bppArgb);
+            using var bitmap = new Bitmap(CurrentScreenBounds.Width, CurrentScreenBounds.Height, PixelFormat.Format32bppRgb);
             using (var graphic = Graphics.FromImage(bitmap))
             {
                 graphic.CopyFromScreen(CurrentScreenBounds.Left, CurrentScreenBounds.Top, 0, 0, new Size(CurrentScreenBounds.Width, CurrentScreenBounds.Height));
@@ -312,7 +312,7 @@ public class ScreenCapturerWin : IScreenCapturer
             using Texture2D screenTexture2D = screenResource.QueryInterface<Texture2D>();
             device.ImmediateContext.CopyResource(screenTexture2D, texture2D);
             var dataBox = device.ImmediateContext.MapSubresource(texture2D, 0, MapMode.Read, SharpDX.Direct3D11.MapFlags.None);
-            using var bitmap = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppArgb);
+            using var bitmap = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppRgb);
             var bitmapData = bitmap.LockBits(bounds, ImageLockMode.WriteOnly, bitmap.PixelFormat);
             var dataBoxPointer = dataBox.DataPointer;
             var bitmapDataPointer = bitmapData.Scan0;

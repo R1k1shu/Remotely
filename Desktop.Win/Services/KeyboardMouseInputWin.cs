@@ -46,21 +46,7 @@ public class KeyboardMouseInputWin(
 
         if (key == "ShiftAlt")
         {
-            TryOnInputDesktop(() =>
-            {
-                var count = GetKeyboardLayoutList(0, Array.Empty<nint>());
-                var layouts = new nint[count];
-                GetKeyboardLayoutList(count, layouts);
-                var current = GetKeyboardLayout(0);
-                var currentIndex = Array.IndexOf(layouts, current);
-                _logger.LogInformation("Current layout: {current}, index: {index}, all: {all}",
-                    current, currentIndex, string.Join(",", layouts));
-                var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
-                ActivateKeyboardLayout(nextLayout, 0);
-                var hwnd = GetForegroundWindow();
-                PostMessage(hwnd, 0x0050, nextLayout, nextLayout);
-                _logger.LogInformation("Activated layout: {layout}, hwnd: {hwnd}", nextLayout, hwnd);
-            });
+            TryOnInputDesktop(SwitchKeyboardLayout);
             return;
         }
 
@@ -94,17 +80,7 @@ public class KeyboardMouseInputWin(
                         _logger.LogInformation("Alt pressed, shiftPressed={shiftPressed}", shiftPressed);
                         if (shiftPressed)
                         {
-                            // Получаем список раскладок и переключаем на следующую
-                            var count = GetKeyboardLayoutList(0, Array.Empty<nint>());
-                            var layouts = new nint[count];
-                            GetKeyboardLayoutList(count, layouts);
-                            var current = GetKeyboardLayout(0);
-                            var currentIndex = Array.IndexOf(layouts, current);
-                            var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
-                            ActivateKeyboardLayout(nextLayout, 0);
-                            var hwnd = GetForegroundWindow();
-                            PostMessage(hwnd, 0x0050, nextLayout, nextLayout); // WM_INPUTLANGCHANGEREQUEST
-                            _logger.LogInformation("Activated layout: {layout}, hwnd: {hwnd}", nextLayout, hwnd);
+                            SwitchKeyboardLayout();
                             return;
                         }
                     }
@@ -671,6 +647,53 @@ public class KeyboardMouseInputWin(
 
         _inputProcessingThread.SetApartmentState(ApartmentState.MTA);
         _inputProcessingThread.Start();
+    }
+
+    /// <summary>
+    /// Switches the keyboard layout of the window that actually has input focus.
+    /// The next layout is calculated from the focused window's thread, not from our
+    /// own input thread, since layouts are per-thread and may differ between apps/dialogs.
+    /// </summary>
+    private void SwitchKeyboardLayout()
+    {
+        const uint WM_INPUTLANGCHANGEREQUEST = 0x0050;
+
+        var foreground = GetForegroundWindow();
+        if (foreground == 0)
+        {
+            _logger.LogWarning("Unable to switch layout.  No foreground window.");
+            return;
+        }
+
+        var threadId = GetWindowThreadProcessId(foreground, out _);
+        var guiInfo = new GUITHREADINFO { cbSize = Marshal.SizeOf<GUITHREADINFO>() };
+        var focused = GetGUIThreadInfo(threadId, ref guiInfo) && guiInfo.hwndFocus != 0
+            ? guiInfo.hwndFocus
+            : foreground;
+
+        var count = GetKeyboardLayoutList(0, Array.Empty<nint>());
+        if (count < 2)
+        {
+            return;
+        }
+
+        var layouts = new nint[count];
+        GetKeyboardLayoutList(count, layouts);
+
+        var current = GetKeyboardLayout(threadId);
+        var currentIndex = Array.IndexOf(layouts, current);
+        var nextLayout = layouts[(currentIndex + 1) % layouts.Length];
+
+        ActivateKeyboardLayout(nextLayout, 0);
+        PostMessage(focused, WM_INPUTLANGCHANGEREQUEST, 0, nextLayout);
+        if (focused != foreground)
+        {
+            PostMessage(foreground, WM_INPUTLANGCHANGEREQUEST, 0, nextLayout);
+        }
+
+        _logger.LogDebug(
+            "Layout switched.  Foreground: {foreground}, focused: {focused}, thread: {threadId}, current: {current}, next: {next}",
+            foreground, focused, threadId, current, nextLayout);
     }
 
     private void TryOnInputDesktop(Action inputAction)
