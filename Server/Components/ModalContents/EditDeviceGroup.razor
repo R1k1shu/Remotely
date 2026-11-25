@@ -5,6 +5,16 @@
     Editing @EditUser?.UserName
 </h5>
 
+<div class="mb-2 pb-2 border-bottom">
+    <input
+        id="select-all-device-groups"
+        type="checkbox"
+        class="align-middle me-2"
+        checked="@AllGroupsSelected"
+        @onchange="SelectAllChanged" />
+    <label class="align-middle mb-0 fw-bold" for="select-all-device-groups">All groups</label>
+</div>
+
 @foreach (var group in DeviceGroups ?? Array.Empty<DeviceGroup>())
 {
     <div @key="group.ID">
